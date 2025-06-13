@@ -1,0 +1,130 @@
+#### SEML and SLURM config
+
+seml:
+  executable: main.py
+  name: mlp_layer_wise_noise_KL_div
+  output_dir: logs
+  project_root_dir: ../..
+
+slurm:
+  sbatch_options_template: cpu_short
+  sbatch_options:
+    begin: now       # dummy parameter
+
+
+#### Experiment config
+
+fixed:
+  general:
+    num_epochs: 100
+  optimizer:
+    optimizer_type: Adam
+    lr_scheduler: CosineAnnealingLR
+    lr: 1e-3
+  data:
+    dataset: MNIST
+  model:
+    model_class: MLP
+    criterion: CrossEntropyLoss
+  noise_settings.default:
+    noise_type: NoNoise
+    enable_in_training: True
+    enable_in_eval: True
+    print_debug_output: False
+    normalize_to_input_size: False
+  noise_settings.layer_wise:
+    enable_in_training: False
+    enable_in_eval: True
+
+grid:
+  general.repeat_number:
+    type: range
+    min: 0
+    max: 5
+    step: 1
+  noise_settings.layer_wise.normalize_to_input_size:
+    type: choice
+    options:
+      - False
+      - True
+
+
+kl_div_BN_add:
+  fixed:
+    kl_div_metric.compute_against_pre_trained_no_noise: True
+    model.MLP.conf_name: RL_TFC
+    noise_settings.layer_wise:
+      noise_type: GaussAdd
+      GaussMean: 0.0
+  grid:
+    noise_settings.layer_wise:
+      layer_index:
+        type: range
+        min: 0
+        max: 11
+        step: 1
+    noise_settings.layer_wise.GaussStd:
+      type: loguniform
+      min: 1e-2
+      max: 1e+5
+      num: 29
+
+kl_div_BN_mul:
+  fixed:
+    kl_div_metric.compute_against_pre_trained_no_noise: True
+    model.MLP.conf_name: RL_TFC
+    noise_settings.layer_wise:
+      noise_type: GaussMul
+      GaussMean: 1.0
+  grid:
+    noise_settings.layer_wise:
+      layer_index:
+        type: range
+        min: 0
+        max: 11
+        step: 1
+    noise_settings.layer_wise.GaussStd:
+      type: loguniform
+      min: 1e-2
+      max: 1e+5
+      num: 29
+
+kl_div_noBN_add:
+  fixed:
+    kl_div_metric.compute_against_pre_trained_no_noise: True
+    model.MLP.conf_name: RL_TFC-noBN
+    noise_settings.layer_wise:
+      noise_type: GaussAdd
+      GaussMean: 0.0
+  grid:
+    noise_settings.layer_wise:
+      layer_index:
+        type: range
+        min: 0
+        max: 8
+        step: 1
+    noise_settings.layer_wise.GaussStd:
+      type: loguniform
+      min: 1e-2
+      max: 1e+5
+      num: 29
+
+kl_div_noBN_mul:
+  fixed:
+    kl_div_metric.compute_against_pre_trained_no_noise: True
+    model.MLP.conf_name: RL_TFC-noBN
+    noise_settings.layer_wise:
+      noise_type: GaussMul
+      GaussMean: 1.0
+  grid:
+    noise_settings.layer_wise:
+      layer_index:
+        type: range
+        min: 0
+        max: 8
+        step: 1
+    noise_settings.layer_wise.GaussStd:
+      type: loguniform
+      min: 1e-2
+      max: 1e+5
+      num: 29

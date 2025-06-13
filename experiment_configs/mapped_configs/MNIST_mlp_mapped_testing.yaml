@@ -1,0 +1,83 @@
+#### SEML and SLURM config
+
+seml:
+  executable: main.py
+  name: mlp_mapped_noise_testing
+  output_dir: logs
+  project_root_dir: ../..
+
+slurm:
+  sbatch_options:
+    begin: now       # dummy parameter
+    nice: 0
+
+
+#### Experiment config
+
+fixed:
+  general:
+    num_epochs: 100
+  optimizer:
+    optimizer_type: Adam
+    lr_scheduler: CosineAnnealingLR
+    lr: 1e-3
+  data:
+    dataset: MNIST
+  model:
+    model_class: MLP
+    criterion: CrossEntropyLoss
+  noise_settings.layer_wise: None
+  noise_settings.default:
+    noise_type: GaussAdd
+    GaussStd: -1.
+    enable_in_training: False
+
+grid:
+  general.repeat_number:
+    type: range
+    min: 0
+    max: 2
+    step: 1
+
+no_noise:
+  fixed:
+    noise_settings.default.noise_type: NoNoise
+  grid:
+    model.MLP.conf_name:
+      type: choice
+      options:
+        - RL_TFC
+        - RL_TFC-noBN
+
+test_mapping:
+  fixed:
+    model.MLP.conf_name: RL_TFC-noBN
+    noise_settings.layer_mapped:
+      # Noise op specific settings
+      noise_type: GaussAdd
+      std_key_name: GaussStd
+      noise_op_kwargs:
+        GaussMean: 0.0
+        enable_in_eval: True
+        normalize_to_input_size: False
+        print_debug_output: True
+      # Mapping specific settings
+      re_normalize_mapping: True
+      std_multiplication_factor: 1e1
+      std_map:
+        0: 0.1
+        1: 0.2
+        2: 0.3
+        3: 0.4
+        4: 0.5
+        5: 0.6
+        6: 0.7
+        7: 0.8
+  grid:
+    noise_settings.layer_mapped.noise_op_kwargs:
+      enable_in_training:
+        type: choice
+        options:
+          - False
+         - True
+

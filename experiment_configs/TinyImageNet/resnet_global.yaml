@@ -1,0 +1,78 @@
+#### SEML and SLURM config
+
+seml:
+  executable: main.py
+  name: ResNet_TinyImage_baseline
+  output_dir: logs
+  project_root_dir: ../..
+
+slurm:
+  max_simultaneous_jobs: 10  # Restrict number of simultaneously running jobs per job array
+  experiments_per_job: 1 #6
+  sbatch_options:
+    begin: now       # dummy parameter
+    nice: 0
+    gres: gpu:1
+    time: 0-36:00
+    mem: 12G
+    cpus-per-task: 4
+    partition: all
+    exclude: 'csg-octane[01-08],csg-victoria'
+
+
+#### Experiment config
+
+fixed:
+  #general:
+  #  num_epochs: 10
+  optimizer:
+    optimizer_type: Adam
+    lr_scheduler: CosineAnnealingLR
+    weight_decay: 1e-4
+  data:
+    dataset: TinyImageNet
+  model:
+    model_class: ResNet
+    criterion: CrossEntropyLoss
+  noise_settings:
+    layer_wise: None
+    is_incremental: True
+
+grid:
+  general.repeat_number:
+    type: range
+    min: 0
+    max: 1
+    step: 1
+  model.ResNet.conf_name:
+    type: choice
+    options:
+      - ResNet50
+      - ResNet18
+  general.num_epochs:
+    type: choice
+    options:
+      - 400
+  optimizer.lr:
+    type: choice
+    options:
+      - 0.001
+
+gauss_add:
+  fixed:
+    noise_settings.default:
+      noise_type: GaussAdd
+      GaussMean: 0.0
+  grid:
+    noise_settings.default:
+      GaussStd:
+        type: choice
+        options:
+          - 0.75
+          - 1.25
+          - 2.25
+          - 3.0
+      enable_in_training:
+        type: choice
+        options:
+          - 1
